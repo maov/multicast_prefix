@@ -41,11 +41,11 @@ def setup_route(prefix=None, gateway=None):
         raise exception("something went wrong calling {0} \n{1}".format(cmd, err))
     else: 
         routes = output.decode('utf-8').split("\n")
-        common_routes = routes.startswith(cc.COMMON_PREFIX).split(' ')
+        common_routes = [ e.split(' ') for e in routes if e .startswith(cc.COMMON_PREFIX)]
         prefix_gateway = dict([(e[0],e[3]) for e in common_routes])
         print(routes)
     #what to do when ip/routes change, remove previous entry?!?!?
-    if prefix is not None AND prefix not IN prefix_gateway:
+    if prefix is not None and prefix not in prefix_gateway:
         #add route
         route_cmd = 'Adding, ip -6 route add {0} via {1}'.format(prefix, gateway)
         print(route_cmd)

@@ -7,7 +7,7 @@ import logging
 import hashlib
 
 LOCAL_IP6="{0}::1/64".format(cc.COMMON_PREFIX)
-TEST_IP6="{0}::3/64".format(cc.COMMON_PREFIX)
+TEST_IP6="{0}::3".format(cc.COMMON_PREFIX)
 PREFIX= "{0}:{1}:{2}::/80"
 
 
