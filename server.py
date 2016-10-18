@@ -10,7 +10,6 @@ entry_start = '### START AUTOMATIC GENERATED ENTRIES ###\n'
 entry_stop = '### END AUTOMATIC GENERATED ENTRIES ###\n'
 
 INTERFACE="eth0"
-COMMON_PREFIX='fdee:f345:543f'
 
 #read until start tag copy all elements untill end tag, save file and return dict, last entryfile
 def open_host_file(host_name=None, ipv6=None):
@@ -42,7 +41,7 @@ def setup_route(prefix=None, gateway=None):
         raise exception("something went wrong calling {0} \n{1}".format(cmd, err))
     else: 
         routes = output.decode('utf-8').split("\n")
-        common_routes = routes.startswith(COMMON_PREFIX).split(' ')
+        common_routes = routes.startswith(cc.COMMON_PREFIX).split(' ')
         prefix_gateway = dict([(e[0],e[3]) for e in common_routes])
         print(routes)
     #what to do when ip/routes change, remove previous entry?!?!?
