@@ -47,7 +47,7 @@ def setup_route(prefix=None, gateway=None):
     #what to do when ip/routes change, remove previous entry?!?!?
     if prefix is not None and prefix not in prefix_gateway:
         #add route
-        route_cmd = 'Adding, ip -6 route add {0} via {1}'.format(prefix, gateway)
+        route_cmd = 'ip -6 route add {0} via {1}'.format(prefix, gateway)
         print(route_cmd)
         proc2 = subprocess.Popen(route_cmd, shell=True, stdout=subprocess.PIPE)
         (output,error) = proc2.communicate()
@@ -57,8 +57,6 @@ def setup_route(prefix=None, gateway=None):
     return prefix_gateway
 
 setup_route()
-
-print(socket.gethostname())
 
 hosts = {}
 
@@ -71,7 +69,6 @@ print('starting up on {0}'.format(server_address))
 sock.bind((server_address))
 
 open_host_file()
-
 
 
 try : 
@@ -93,5 +90,6 @@ try :
             print('New entry added {0} : {1}', data_spl[0], hosts[data_spl[0]]) 
             #update hosts file
             #update route
+            setup_route(data_spl[2], data_spl[1])
 finally:
     sock.close()
