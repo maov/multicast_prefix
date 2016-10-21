@@ -4,6 +4,7 @@ import sys
 import common as cc
 import logging
 import subprocess
+import struct
 
 
 entry_start = '### START AUTOMATIC GENERATED ENTRIES ###\n'
@@ -56,22 +57,24 @@ def setup_route(prefix=None, gateway=None):
         prefix_gateway[prefix] = gateway
     return prefix_gateway
 
-setup_route()
+#setup_route()
 
 hosts = {}
 
-sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-server_address = ('', cc.PORT)
-print('starting up on {0}'.format(server_address))
-
-sock.bind((server_address))
-
-open_host_file()
-
+#open_host_file()
 
 try : 
+    sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    #group = socket.inet_pton(socket.AF_INET6, cc.GROUP_6)
+    server_address = ('', cc.PORT)
+    print('starting up on {0}'.format(server_address))
+     
+    sock.bind(server_address)
+
+    group = socket.inet_pton(socket.AF_INET6, cc.GROUP_6) + struct.pack('=I', socket.INADDR_ANY)
+    sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, group)
+
     while True:
         print(hosts)
         print('waiting for connection')

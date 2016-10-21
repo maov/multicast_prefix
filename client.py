@@ -8,7 +8,6 @@ import hashlib
 import argparse
 
 
-LOCAL_IP6="{0}::1".format(cc.COMMON_PREFIX)
 TEST_IP6="{0}::3".format(cc.COMMON_PREFIX)
 DOCKER_IPV6_RANGE= "{0}:{1}::/80"
 HOST_IPV6="{0}:0000:0000:0000:{1}"
@@ -29,7 +28,9 @@ def run_client(interval) :
         sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
         msg = '{0};{1};{2}'.format(hostname,local_prefix(hostname, HOST_IPV6), local_prefix(hostname, DOCKER_IPV6_RANGE))
         print('Sending multicast {0}'.format(msg.encode('utf-8')))
-        sock.sendto(msg.encode('utf-8'), (TEST_IP6, cc.PORT))
+        # Set Time-to-live (optional)
+        #ttl_bin = struct.pack('@i', cc.TTL)
+        sock.sendto(msg.encode('utf-8'), (cc.GROUP_6, cc.PORT))
         time.sleep(interval)
 
 parser = argparse.ArgumentParser()
