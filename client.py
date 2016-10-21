@@ -10,31 +10,37 @@ import argparse
 
 LOCAL_IP6="{0}::1".format(cc.COMMON_PREFIX)
 TEST_IP6="{0}::3".format(cc.COMMON_PREFIX)
-PREFIX= "{0}:{1}:{2}::/80"
+DOCKER_IPV6_RANGE= "{0}:{1}::/80"
+HOST_IPV6="{0}:0000:0000:0000:{1}"
 
 sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-hostname = socket.gethostname()
+hostname = socket.gethostname().encode("utf-8")
 sock.close()
 
-def local_prefix() :
+def local_prefix(seed, formatable_str, parts=2) :
     #use hashlib to generate prefix, and hope for no clash
-    prefix_seed = hashlib.md5(hostname.encode("utf-8")).hexdigest()[0:8]
-    return PREFIX.format(cc.COMMON_PREFIX,prefix_seed[0:4], prefix_seed[4:8])
+    prefix_length=parts*4
+    prefix_seed = hashlib.md5(seed).hexdigest()[0:prefix_length]
+    prefix = ":".join([prefix_seed[e*4 - 4 : e*4] for e in range(1,parts + 1)])
+    return formatable_str.format(cc.COMMON_PREFIX,prefix)
 
 def run_client(interval) :
     while True:
         sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-        msg = '{0};{1};{2}'.format(hostname,LOCAL_IP6, local_prefix())
+        msg = '{0};{1};{2}'.format(hostname,local_prefix(hostname, HOST_IPV6), local_prefix(hostname, DOCKER_IPV6_RANGE))
         print('Sending multicast {0}'.format(msg.encode('utf-8')))
         sock.sendto(msg.encode('utf-8'), (TEST_IP6, cc.PORT))
         time.sleep(interval)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('gen_prefix', help='generates ipv6/80 prefix using md5 on hostname') 
-parser.add_argument('interval', help='Interval in seconds between each multicast request',type=int, default=30)
+parser.add_argument('--prefix_hostname', help='generates ipv6/80 prefix using md5 on hostname', action="store_true") 
+parser.add_argument('--interval', help='Interval in seconds between each multicast request',type=int, default=30)
+parser.add_argument('--gen_host_ipv6', help='generate prefix from input using md5', type=str, default=None)
 args = parser.parse_args()
 
-if args.gen_prefix :
-    print(local_prefix())
+if args.prefix_hostname :
+    print(local_prefix(hostname, DOCKER_IPV6_RANGE))
+elif args.gen_host_ipv6 != None:
+    print(local_prefix(args.gen_host_ipv6, HOST_IPV6))    
 else :
     run_client(10)
