@@ -13,7 +13,8 @@ DOCKER_IPV6_RANGE= "{0}:{1}::/80"
 HOST_IPV6="{0}:0000:0000:0000:{1}"
 
 sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-hostname = socket.gethostname().encode("utf-8")
+hostname = socket.gethostname()
+host_enc = hostname.encode("utf-8")
 sock.close()
 
 def local_prefix(seed, formatable_str, parts=2) :
@@ -26,7 +27,7 @@ def local_prefix(seed, formatable_str, parts=2) :
 def run_client(interval) :
     while True:
         sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-        msg = '{0};{1};{2}'.format(hostname,local_prefix(hostname, HOST_IPV6), local_prefix(hostname, DOCKER_IPV6_RANGE))
+        msg = '{0};{1};{2}'.format(hostname,local_prefix(host_enc, HOST_IPV6), local_prefix(host_enc, DOCKER_IPV6_RANGE))
         print('Sending multicast {0}'.format(msg.encode('utf-8')))
         # Set Time-to-live (optional)
         #ttl_bin = struct.pack('@i', cc.TTL)
@@ -40,7 +41,7 @@ parser.add_argument('--gen_host_ipv6', help='generate prefix from input using md
 args = parser.parse_args()
 
 if args.prefix_hostname :
-    print(local_prefix(hostname, DOCKER_IPV6_RANGE))
+    print(local_prefix(host_enc, DOCKER_IPV6_RANGE))
 elif args.gen_host_ipv6 != None:
     print(local_prefix(args.gen_host_ipv6, HOST_IPV6))    
 else :

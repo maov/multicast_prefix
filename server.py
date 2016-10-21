@@ -19,16 +19,17 @@ def open_host_file(host_name=None, ipv6=None):
         lines = host_file.readlines()
     if entry_start not in lines :
         ## create start and stop entries
-        lines.append(entr_start)
+        lines.append(entry_start)
         lines.append(entry_stop)
     start_idx = lines.index(entry_start)
     stop_idx = lines.index(entry_stop)
-    new_line = '' if host_name is None else '{0} {1}'.format(ipv6, host_name)
+    new_line = '' if host_name is None else '{0} {1}\n'.format(ipv6, host_name)
     lines.insert(start_idx + 1, new_line)
     entries = lines[start_idx + 1 : stop_idx]
     key_value = [e.split(' ',1).reverse() for e in entries if ' ' in e]
     with open('/etc/hosts','w') as host_file :
         host_file.write("".join(lines))
+    print(key_value)
     return dict(key_value)
 
 
@@ -57,18 +58,14 @@ def setup_route(prefix=None, gateway=None):
         prefix_gateway[prefix] = gateway
     return prefix_gateway
 
-#setup_route()
-
 hosts = {}
-
-#open_host_file()
 
 try : 
     sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     #group = socket.inet_pton(socket.AF_INET6, cc.GROUP_6)
-    server_address = ('', cc.PORT)
-    print('starting up on {0}'.format(server_address))
+    server_address = (cc.GROUP_6, cc.PORT)
+    print('starting up on {0} listening to multicast {1}'.format(server_address, cc.GROUP_6))
      
     sock.bind(server_address)
 
@@ -76,23 +73,22 @@ try :
     sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, group)
 
     while True:
-        print(hosts)
         print('waiting for connection')
         data, sender = sock.recvfrom(1500)
-        print (str(sender) + '  ' + data.decode('utf-8'))
+        #print (str(sender) + '  ' + data.decode('utf-8'))
         data_spl = data.decode('utf-8').split(';')
-        #get device that reveived multicast???
-
-        #Check hash hasnt been used yet
-        #for lala in hosts where key <> key and prefix  = prefix
-        #throw warning if its the case
-
-        #otherwise add the key if it hasnt been addded
+        #add the key if it hasnt been addded
         if data_spl[0] not in hosts:
-            hosts[data_spl[0]] = { 'ipv6' : data_spl[1], 'prefix' : data_spl[2]} 
-            print('New entry added {0} : {1}', data_spl[0], hosts[data_spl[0]]) 
+            hostname = data_spl[0]
+            host_entry = { 'ipv6' : data_spl[1], 'prefix' : data_spl[2]}
             #update hosts file
+            print(hostname)
+            print(host_entry)
+            oldhosts = open_host_file(host_name=hostname, ipv6=host_entry['ipv6'])
+            print(oldhosts)
             #update route
-            setup_route(data_spl[2], data_spl[1])
+            setup_route(host_entry['prefix'], host_entry['ipv6'])
+            hosts[hostname] = host_entry
+            print('New entry added {0} : {1}', hostname, hosts[hostname]) 
 finally:
     sock.close()
