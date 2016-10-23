@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import socket
 import sys
 import common as cc
@@ -45,4 +45,4 @@ if args.prefix_hostname :
 elif args.gen_host_ipv6 != None:
     print(local_prefix(args.gen_host_ipv6, HOST_IPV6))    
 else :
-    run_client(10)
+    run_client(args.interval)

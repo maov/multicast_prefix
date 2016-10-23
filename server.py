@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import socket
 import sys
 import common as cc
@@ -13,9 +13,9 @@ entry_stop = '### END AUTOMATIC GENERATED ENTRIES ###\n'
 INTERFACE="eth0"
 
 #read until start tag copy all elements untill end tag, save file and return dict, last entryfile
-def open_host_file(host_name=None, ipv6=None):
+def open_host_file(host_name=None, ipv6=None, file_path='/etc/hosts'):
     lines = []
-    with open('/etc/hosts','r') as host_file:
+    with open(file_path, 'r') as host_file:
         lines = host_file.readlines()
     if entry_start not in lines :
         ## create start and stop entries
@@ -23,13 +23,13 @@ def open_host_file(host_name=None, ipv6=None):
         lines.append(entry_stop)
     start_idx = lines.index(entry_start)
     stop_idx = lines.index(entry_stop)
-    new_line = '' if host_name is None else '{0} {1}\n'.format(ipv6, host_name)
-    lines.insert(start_idx + 1, new_line)
+    if host_name is not None :
+        lines.insert(start_idx + 1, '{0} {1}\n'.format(ipv6, host_name))
+        stop_idx = stop_idx + 1
     entries = lines[start_idx + 1 : stop_idx]
-    key_value = [e.split(' ',1).reverse() for e in entries if ' ' in e]
-    with open('/etc/hosts','w') as host_file :
+    key_value = [e.split(' ',1)[::-1] for e in entries if ' ' in e]
+    with open(file_path,'w') as host_file :
         host_file.write("".join(lines))
-    print(key_value)
     return dict(key_value)
 
 
@@ -58,7 +58,8 @@ def setup_route(prefix=None, gateway=None):
         prefix_gateway[prefix] = gateway
     return prefix_gateway
 
-hosts = {}
+hosts = open_host_file(file_path='testfile.txt') 
+print(hosts)
 
 try : 
     sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
@@ -72,20 +73,20 @@ try :
     group = socket.inet_pton(socket.AF_INET6, cc.GROUP_6) + struct.pack('=I', socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, group)
 
+    print('waiting for connection')
     while True:
-        print('waiting for connection')
         data, sender = sock.recvfrom(1500)
+        print('got connection {0}'.format(sender))
         #print (str(sender) + '  ' + data.decode('utf-8'))
         data_spl = data.decode('utf-8').split(';')
+        hostname = data_spl[0]
         #add the key if it hasnt been addded
-        if data_spl[0] not in hosts:
-            hostname = data_spl[0]
+        if hostname not in hosts:
             host_entry = { 'ipv6' : data_spl[1], 'prefix' : data_spl[2]}
             #update hosts file
             print(hostname)
             print(host_entry)
-            oldhosts = open_host_file(host_name=hostname, ipv6=host_entry['ipv6'])
-            print(oldhosts)
+            hosts = open_host_file(host_name=hostname, ipv6=host_entry['ipv6'])
             #update route
             setup_route(host_entry['prefix'], host_entry['ipv6'])
             hosts[hostname] = host_entry
