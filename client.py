@@ -10,7 +10,7 @@ import argparse
 
 TEST_IP6="{0}::3".format(cc.COMMON_PREFIX)
 DOCKER_IPV6_RANGE= "{0}:{1}::/80"
-HOST_IPV6="{0}:0000:0000:0000:{1}"
+HOST_IPV6="{0}::{1}"
 
 sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
 hostname = socket.gethostname()
@@ -40,9 +40,11 @@ parser.add_argument('--interval', help='Interval in seconds between each multica
 parser.add_argument('--gen_host_ipv6', help='generate prefix from input using md5', type=str, default=None)
 args = parser.parse_args()
 
+
 if args.prefix_hostname :
     print(local_prefix(host_enc, DOCKER_IPV6_RANGE))
-elif args.gen_host_ipv6 != None:
-    print(local_prefix(args.gen_host_ipv6, HOST_IPV6))    
+elif args.gen_host_ipv6:
+    gen_name = args.gen_host_ipv6.encode("utf-8")
+    print(local_prefix(gen_name, HOST_IPV6))    
 else :
     run_client(args.interval)
