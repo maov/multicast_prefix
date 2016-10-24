@@ -26,10 +26,10 @@ def open_host_file(host_name=None, ipv6=None, file_path='/etc/hosts'):
     if host_name is not None :
         lines.insert(start_idx + 1, '{0} {1}\n'.format(ipv6, host_name))
         stop_idx = stop_idx + 1
-    entries = lines[start_idx + 1 : stop_idx]
-    key_value = [e.split(' ',1)[::-1] for e in entries if ' ' in e]
     with open(file_path,'w') as host_file :
         host_file.write("".join(lines))
+    entries = lines[start_idx + 1 : stop_idx]
+    key_value = [e.strip('\n').split(' ',1)[::-1] for e in entries if ' ' in e]
     return dict(key_value)
 
 
@@ -86,7 +86,7 @@ try :
             #update hosts file
             print(hostname)
             print(host_entry)
-            hosts = open_host_file(host_name=hostname, ipv6=host_entry['ipv6'])
+            hosts = open_host_file(host_name=hostname, ipv6=host_entry['ipv6'], file_path='testfile.txt')
             #update route
             setup_route(host_entry['prefix'], host_entry['ipv6'])
             hosts[hostname] = host_entry
