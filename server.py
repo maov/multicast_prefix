@@ -5,6 +5,8 @@ import common as cc
 import logging
 import subprocess
 import struct
+import argparse
+
 
 
 entry_start = '### START AUTOMATIC GENERATED ENTRIES ###\n'
@@ -58,38 +60,47 @@ def setup_route(prefix=None, gateway=None):
         prefix_gateway[prefix] = gateway
     return prefix_gateway
 
-hosts = open_host_file(file_path='testfile.txt') 
-print(hosts)
+parser = argparse.ArgumentParser()
+parser.add_argument('--hosts', help='Get a list of hosts in hostfile', action="store_true")
+parser.add_argument('--hostfile', help='File used to store host entries', type=str, default='/etc/hosts')
+args = parser.parse_args()
 
-try : 
-    sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    #group = socket.inet_pton(socket.AF_INET6, cc.GROUP_6)
-    server_address = (cc.GROUP_6, cc.PORT)
-    print('starting up on {0} listening to multicast {1}'.format(server_address, cc.GROUP_6))
+
+
+hosts = open_host_file(file_path=args.hostfile) 
+if args.hosts :
+    for e in [v + ' ' + k for k, v in hosts.items()] :
+        print(e)
+else :
+    try : 
+        sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        #group = socket.inet_pton(socket.AF_INET6, cc.GROUP_6)
+        server_address = (cc.GROUP_6, cc.PORT)
+        print('starting up on {0} listening to multicast {1}'.format(server_address, cc.GROUP_6))
      
-    sock.bind(server_address)
+        sock.bind(server_address)
 
-    group = socket.inet_pton(socket.AF_INET6, cc.GROUP_6) + struct.pack('=I', socket.INADDR_ANY)
-    sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, group)
+        group = socket.inet_pton(socket.AF_INET6, cc.GROUP_6) + struct.pack('=I', socket.INADDR_ANY)
+        sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, group)
 
-    print('waiting for connection')
-    while True:
-        data, sender = sock.recvfrom(1500)
-        print('got connection {0}'.format(sender))
-        #print (str(sender) + '  ' + data.decode('utf-8'))
-        data_spl = data.decode('utf-8').split(';')
-        hostname = data_spl[0]
-        #add the key if it hasnt been addded
-        if hostname not in hosts:
-            host_entry = { 'ipv6' : data_spl[1], 'prefix' : data_spl[2]}
-            #update hosts file
-            print(hostname)
-            print(host_entry)
-            hosts = open_host_file(host_name=hostname, ipv6=host_entry['ipv6'], file_path='testfile.txt')
-            #update route
-            setup_route(host_entry['prefix'], host_entry['ipv6'])
-            hosts[hostname] = host_entry
-            print('New entry added {0} : {1}', hostname, hosts[hostname]) 
-finally:
-    sock.close()
+        print('waiting for connection')
+        while True:
+            data, sender = sock.recvfrom(1500)
+            print('got connection {0}'.format(sender))
+            #print (str(sender) + '  ' + data.decode('utf-8'))
+            data_spl = data.decode('utf-8').split(';')
+            hostname = data_spl[0]
+            #add the key if it hasnt been addded
+            if hostname not in hosts:
+                host_entry = { 'ipv6' : data_spl[1], 'prefix' : data_spl[2]}
+                #update hosts file
+                print(hostname)
+                print(host_entry)
+                hosts = open_host_file(host_name=hostname, ipv6=host_entry['ipv6'], file_path='testfile.txt')
+                #update route
+                setup_route(host_entry['prefix'], host_entry['ipv6'])
+                hosts[hostname] = host_entry
+                print('New entry added {0} : {1}', hostname, hosts[hostname]) 
+    finally:
+        sock.close()
