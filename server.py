@@ -12,8 +12,6 @@ import argparse
 entry_start = '### START AUTOMATIC GENERATED ENTRIES ###\n'
 entry_stop = '### END AUTOMATIC GENERATED ENTRIES ###\n'
 
-INTERFACE="eth0"
-
 #read until start tag copy all elements untill end tag, save file and return dict, last entryfile
 def open_host_file(host_name=None, ipv6=None, file_path='/etc/hosts'):
     lines = []
@@ -28,6 +26,7 @@ def open_host_file(host_name=None, ipv6=None, file_path='/etc/hosts'):
     if host_name is not None :
         lines.insert(start_idx + 1, '{0} {1}\n'.format(ipv6, host_name))
         stop_idx = stop_idx + 1
+    #What happends if dockerimage gets nuked while writing, how bad is a broken hostfile?
     with open(file_path,'w') as host_file :
         host_file.write("".join(lines))
     entries = lines[start_idx + 1 : stop_idx]
@@ -41,6 +40,7 @@ def setup_route(prefix=None, gateway=None):
     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     (output, err) = proc.communicate()
     prefix_gateway = {}
+    #use supervisord to restart application in case of clash instead of error handling
     if err is not None:
         raise exception("something went wrong calling {0} \n{1}".format(cmd, err))
     else: 
@@ -75,7 +75,6 @@ else :
     try : 
         sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        #group = socket.inet_pton(socket.AF_INET6, cc.GROUP_6)
         server_address = (cc.GROUP_6, cc.PORT)
         print('starting up on {0} listening to multicast {1}'.format(server_address, cc.GROUP_6))
      
@@ -88,18 +87,15 @@ else :
         while True:
             data, sender = sock.recvfrom(1500)
             print('got connection {0}'.format(sender))
-            #print (str(sender) + '  ' + data.decode('utf-8'))
             data_spl = data.decode('utf-8').split(';')
             hostname = data_spl[0]
             #add the key if it hasnt been addded
+            host_entry = { 'ipv6' : data_spl[1], 'prefix' : data_spl[2]}
+            #update route
+            setup_route(host_entry['prefix'], host_entry['ipv6'])
             if hostname not in hosts:
-                host_entry = { 'ipv6' : data_spl[1], 'prefix' : data_spl[2]}
                 #update hosts file
-                print(hostname)
-                print(host_entry)
-                hosts = open_host_file(host_name=hostname, ipv6=host_entry['ipv6'], file_path='testfile.txt')
-                #update route
-                setup_route(host_entry['prefix'], host_entry['ipv6'])
+                hosts = open_host_file(host_name=hostname, ipv6=host_entry['ipv6'], file_path=args.hostfile)
                 hosts[hostname] = host_entry
                 print('New entry added {0} : {1}', hostname, hosts[hostname]) 
     finally:

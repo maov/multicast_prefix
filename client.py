@@ -29,14 +29,12 @@ def run_client(interval) :
         sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
         msg = '{0};{1};{2}'.format(hostname,local_prefix(host_enc, HOST_IPV6), local_prefix(host_enc, DOCKER_IPV6_RANGE))
         print('Sending multicast {0}'.format(msg.encode('utf-8')))
-        # Set Time-to-live (optional)
-        #ttl_bin = struct.pack('@i', cc.TTL)
         sock.sendto(msg.encode('utf-8'), (cc.GROUP_6, cc.PORT))
         time.sleep(interval)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--prefix_hostname', help='generates ipv6/80 prefix using md5 on hostname', action="store_true") 
-parser.add_argument('--interval', help='Interval in seconds between each multicast request',type=int, default=30)
+parser.add_argument('--interval', help='Interval in seconds inbetween each multicast request',type=int, default=30)
 parser.add_argument('--gen_host_ipv6', help='generate prefix from input using md5', type=str, default=None)
 args = parser.parse_args()
 
