@@ -6,7 +6,7 @@ import logging
 import subprocess
 import struct
 import argparse
-
+import ipaddress
 
 
 entry_start = '### START AUTOMATIC GENERATED ENTRIES ###\n'
@@ -90,7 +90,7 @@ else :
             data_spl = data.decode('utf-8').split(';')
             hostname = data_spl[0]
             #add the key if it hasnt been addded
-            host_entry = { 'ipv6' : data_spl[1], 'prefix' : data_spl[2]}
+            host_entry = { 'ipv6' : data_spl[1], 'prefix' : str(ipaddress.IPv6Network(data_spl[2]))}
             #update route
             setup_route(host_entry['prefix'], host_entry['ipv6'])
             if hostname not in hosts:

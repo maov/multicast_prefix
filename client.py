@@ -13,7 +13,7 @@ DOCKER_IPV6_RANGE= "{0}:{1}::/80"
 HOST_IPV6="{0}::{1}"
 
 sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-hostname = socket.gethostname()
+hostname =  "{0}-ipv6".format(socket.gethostname())
 host_enc = hostname.encode("utf-8")
 sock.close()
 
